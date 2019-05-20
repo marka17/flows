@@ -43,9 +43,7 @@ def run_epoch(flow: nn.Module,
     x, _ = make_circles(batch_size, factor=0.5, noise=.05)
     x = torch.from_numpy(x).float()
 
-    # print(flow.log_prob(x))
     loss = -torch.mean(flow.log_prob(x))
-    # print(loss)
 
     optimizer.zero_grad()
     loss.backward()
@@ -54,7 +52,7 @@ def run_epoch(flow: nn.Module,
     return loss.item()
 
 def main(args):
-    scale_network = nn.Sequential(
+    scale_network = lambda: nn.Sequential(
         nn.Linear(args.hidden_dim, args.hidden_size),
         nn.LeakyReLU(),
         nn.Linear(args.hidden_size, args.hidden_size),
@@ -62,7 +60,7 @@ def main(args):
         nn.Linear(args.hidden_size, args.hidden_dim),
         nn.Tanh())
 
-    translation_network = nn.Sequential(
+    translation_network = lambda: nn.Sequential(
         nn.Linear(args.hidden_dim, args.hidden_size),
         nn.LeakyReLU(),
         nn.Linear(args.hidden_size, args.hidden_size),
@@ -79,9 +77,7 @@ def main(args):
     flow = RealNVP(scale_network, translation_network, masks, prior)
     optimizer = optim.Adam(filter(lambda x: x.requires_grad == True, flow.parameters()))
 
-
     for epoch in range(args.num_epoch):
-
         loss = run_epoch(flow, optimizer, args.batch_size)
 
         if epoch % args.log_train_step == 0:
